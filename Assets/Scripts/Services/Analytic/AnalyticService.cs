@@ -12,23 +12,60 @@ namespace Systems.Analytic
         public string serverUrl;
         public float cooldownBeforeSend;
 
-        public event Action<AnalyticEvent> AnalyticEventAdded;
+        public event Action AnalyticEventAdded;
         public event Action AnalyticSendStarted;
         public event Action<WebResponseInfo> AnalyticSendCompleted;
+
+        private const string AnalyticDataKey = "AnalyticServiceDataKey";
         
         private AnalyticsData _dataToSend = new AnalyticsData();
-
         private Coroutine _sendingCoroutine;
 
+        private void Start()
+        {
+            CheckIfPresavedEventsExists();
+        }
+
+        #region Public methods
+        
         public void TrackEvent(string type, string data)
         {
-            AnalyticEvent newEvent = _dataToSend.AddEvent(type, data);
-            AnalyticEventAdded?.Invoke(newEvent);
+            AnalyticsEvent newEvent = _dataToSend.AddEvent(type, data);
+            UpdatePresavedEvents();
+            AnalyticEventAdded?.Invoke();
             StartCoroutineIfNot();
         }
 
-        public AnalyticEvent[] GetCurrentEventsList() => _dataToSend.events.ToArray();
+        public AnalyticsEvent[] GetCurrentEventsList() => _dataToSend.events.ToArray();
+        
+        #endregion
+        
+        #region Private methods
 
+        private void CheckIfPresavedEventsExists()
+        {
+            if (PlayerPrefs.HasKey(AnalyticDataKey))
+            {
+               _dataToSend.AddEventsFromString(PlayerPrefs.GetString(AnalyticDataKey));
+
+               if (_dataToSend.events.Count > 0)
+               {
+                   AnalyticEventAdded?.Invoke();
+                   StartCoroutineIfNot();
+               }
+            }
+        }
+
+        private void UpdatePresavedEvents()
+        {
+            PlayerPrefs.SetString(AnalyticDataKey, JsonUtility.ToJson(_dataToSend));
+            PlayerPrefs.Save();
+        }
+        
+        #endregion
+
+        #region Sending coroutines
+        
         private void StartCoroutineIfNot()
         {
             if (_sendingCoroutine != null)
@@ -78,11 +115,14 @@ namespace Systems.Analytic
             if (success)
             {
                 _dataToSend.Clear();
+                UpdatePresavedEvents();
             }
             
             WebResponseInfo responseInfo = new WebResponseInfo() { success = success, error = request.error ?? "" };
             AnalyticSendCompleted?.Invoke(responseInfo);
             
         }
+        
+        #endregion
     }
 }

@@ -57,10 +57,10 @@ public class TestAnalyticsUIController : MonoBehaviour
         _analyticService.TrackEvent("spentMoney", "count:300");
     }
     
-    private void AnalyticServiceOnAnalyticEventAdded(AnalyticEvent ev)
+    private void AnalyticServiceOnAnalyticEventAdded()
     {
         StringBuilder eventsList = new StringBuilder();
-        AnalyticEvent[] events = _analyticService.GetCurrentEventsList();
+        AnalyticsEvent[] events = _analyticService.GetCurrentEventsList();
 
         foreach (var currentEvent in events)
         {
