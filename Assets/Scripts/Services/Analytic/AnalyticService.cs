@@ -104,7 +104,7 @@ namespace Systems.Analytic
             Debug.Log(eventsData);
             
             UnityWebRequest request = UnityWebRequest.Post(serverUrl, eventsData);
-            
+
             AnalyticSendStarted?.Invoke();
             yield return request.SendWebRequest();
 
